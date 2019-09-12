@@ -1,0 +1,187 @@
+<html>
+	<head>
+		<title>Game of Cat and Mouse</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		
+		<style type="text/css">
+			a {
+				cursor: pointer;
+			}
+		</style>
+		<!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
+
+
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.5.0/math.min.js" type="text/javascript"></script>
+		<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"></script> -->
+		
+		
+		<script type="application/ld+json">
+			{
+			  "@type": "Simulation",
+			  "name": "Game of Cat and Mouse",
+			  "author": "Prajwal DSouza",
+			  "description": "A simulation based on a Numberphile Video"
+			  }
+		</script>
+
+		  <meta charset="UTF-8">
+		  <meta name="description" content="A simulation based on a Numberphile Video">
+		  <meta name="keywords" content="Game of Cat and Mouse, Numberphile, Math, Game theory">
+		  <meta name="author" content="Prajwal DSouza">
+		  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body style='margin:0px; display: block;'>
+		<div id="containAll" style='margin:0px;width:100%; height: 100%; font-size: 0; display: inline-block;'> 
+			<div id="controlTitleSection" style='margin:0px;width:100%; height: 70%;overflow: hidden;position: relative;z-index: 4; display: inline-block; font-size: 4vw;' contenteditable="true">test control</div>
+		</div>
+
+
+		<script type="text/javascript">
+
+
+
+		oldtext = 'test control'
+
+		editablelocations = []
+
+		function grabInstances() {
+			allchildnodes = document.getElementById('controlTitleSection').childNodes
+			editablelocations = []
+			caretpointer = 0
+			for (ch = 0; ch < allchildnodes.length; ch++) {
+				console.log("")
+				console.log(allchildnodes[ch])
+
+				if (allchildnodes[ch].nodeName == 'VARIABLE') {
+					htmllength = allchildnodes[ch].innerHTML.length
+					textlength = allchildnodes[ch].innerText.length
+					editablelocation = {}
+					editablelocation['start'] = caretpointer
+					editablelocation['end'] = caretpointer + htmllength
+					editablelocation['text'] = allchildnodes[ch].innerHTML
+					editablelocation['length'] = htmllength
+				}
+				else if (allchildnodes[ch].nodeName == '#text') {
+					htmllength = allchildnodes[ch].length
+				}
+				console.log(htmllength)
+				// 	editablelocation = {}
+				// 	editablelocation['start'] = caretpointer
+				// 	editablelocation['end'] = caretpointer + htmllength
+				// 	editablelocation['text'] = allchildnodes[ch].innerHTML
+				// 	editablelocation['length'] = htmllength
+				// }
+				caretpointer = caretpointer + htmllength
+			}
+		}
+
+		function checkchange(event) {
+			newtext = event.target.innerText
+			changeindex = comparestrings(oldtext, newtext)
+			// console.log(oldtext, newtext, changeindex)
+			// console.log(editablelocations)
+			grabInstances()
+
+			if (editablelocations.length == 0) {
+				oldtext = newtext
+				replacetext = '<variable style = "color: hsla(190, 100%, 50%, 1);">' + newtext[changeindex] + '</variable>'
+				newstring = newtext.slice(0,changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+				editablelocation = {}
+				editablelocation['startindex'] = changeindex
+				editablelocation['endindex'] = changeindex + 1
+				editablelocation['insidetext'] = newtext[changeindex]
+				editablelocations.push(editablelocation)
+				event.target.innerHTML = newstring
+				range = document.createRange();
+				sel = window.getSelection();
+				allchildnodes = event.target.childNodes
+				range.setStart(event.target.childNodes[1], 1);
+				range.collapse(true);
+				sel.removeAllRanges();
+				sel.addRange(range);
+				event.target.focus();
+			}
+			else {
+				editexisting = false
+				for(loc = 0; loc < editablelocations.length; loc++) {
+					editablelocation = editablelocations[loc]
+					if (changeindex >= (editablelocation['startindex'] - 1) && changeindex < editablelocation['endindex']) {
+						console.log('inside')
+						console.log(editablelocation)
+						editexisting = true
+						break
+					}
+				}
+
+				if (editexisting) {
+
+				}
+				else {
+					oldtext = newtext
+					replacetext = '<variable style = "color: hsla(190, 100%, 50%, 1);">' + newtext[changeindex] + '</variable>'
+					newstring = newtext.slice(0, changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+					editablelocation = {}
+					editablelocation['startindex'] = changeindex
+					editablelocation['endindex'] = changeindex + 1
+					editablelocation['insidetext'] = newtext[changeindex]
+					editablelocations.push(editablelocation)
+					event.target.innerHTML = newstring
+					range = document.createRange();
+					sel = window.getSelection();
+					allchildnodes = event.target.childNodes
+					range.setStart(event.target.childNodes[1], 1);
+					range.collapse(true);
+					sel.removeAllRanges();
+					sel.addRange(range);
+					event.target.focus();
+				}
+			}
+
+
+
+			// sel = window.getSelection();
+			// sel.modify("extend", "backward", "paragraphboundary");
+			// pos = sel.toString().length;
+			// sel.removeAllRanges();
+			// console.log(pos)
+
+				
+			
+
+			
+
+			
+
+
+			// console.log(document.getElementById('controlTitleSection').innerHTML)
+			
+		}
+
+
+
+		function comparestrings(oldstr,newstr) {
+			returnindex = oldstr.length
+			for(m = 0; m < oldstr.length; m++) {
+				if (newstr[m] != oldstr[m]) {
+					returnindex = m
+					break
+				}
+			}
+			return returnindex
+		}
+
+		document.getElementById("controlTitleSection").addEventListener("input", checkchange);
+
+
+
+
+
+		
+		
+			
+		</script>
+
+
+	</body>
+<html>
+

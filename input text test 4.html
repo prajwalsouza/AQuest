@@ -1,0 +1,244 @@
+<html>
+	<head>
+		<title>Game of Cat and Mouse</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		
+		<style type="text/css">
+			a {
+				cursor: pointer;
+			}
+			span:focus {
+				outline: none;
+			}
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.5.0/math.min.js" type="text/javascript"></script>
+		<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"></script> -->
+		
+		
+		<script type="application/ld+json">
+			{
+			  "@type": "Simulation",
+			  "name": "Game of Cat and Mouse",
+			  "author": "Prajwal DSouza",
+			  "description": "A simulation based on a Numberphile Video"
+			  }
+		</script>
+
+		  <meta charset="UTF-8">
+		  <meta name="description" content="A simulation based on a Numberphile Video">
+		  <meta name="keywords" content="Game of Cat and Mouse, Numberphile, Math, Game theory">
+		  <meta name="author" content="Prajwal DSouza">
+		  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body style='margin:0px; display: block;'>
+		<div id="containAll" style='margin:0px;width:100%; height: 100%; font-size: 0; display: inline-block;'> 
+			<div id="controlTitleSection" style='margin:0px;width:100%; height: 70%;overflow: hidden;position: relative;z-index: 4; display: inline-block; font-size: 4vw;' ></div>
+		</div>
+
+
+		<script type="text/javascript">
+
+
+		fullTextDiv = document.getElementById('controlTitleSection')
+
+		varStartstring = '<span class="variable" style="color: hsla(190, 100%, 50%, 1);" contenteditable="true">'
+		varEndstring = '</span>'
+
+		codeStartstring = '<span class="code" style="color: hsla(190, 0%, 0%, 1);">'
+		codeEndstring = '</span>'
+
+		textStartstring = '<span class="text" style="color: hsla(190, 0%, 0%, 1);">'
+		textEndstring = '</span>'
+
+		function addText(textdata) {
+			placementElement = textdata.placementE
+			textE = document.createElement('span')
+			textE.setAttribute('class', 'text')
+			textE.setAttribute('spellcheck',false)
+			textE.setAttribute('contenteditable', true)
+			textE.style.color = 'hsla(40, 0%, 80%, 1)'
+			textE.innerHTML = textdata.text
+			textE.id = eElementUid
+			if (typeof textdata.placementE != 'undefined') {
+				placementElement.parentNode.insertBefore(textE, placementElement.nextSibling)
+				editorElementList[eElementUid] = [textdata.text, 'text']
+				eElementUid = eElementUid + 1
+			}
+			else {
+				fullTextDiv.appendChild(textE)
+				editorElementList[eElementUid] = [textdata.text, 'text']
+				eElementUid = eElementUid + 1
+			}
+		}
+
+		eElementUid = 1
+		editorElementList = {}
+
+		function addVar(vardata) {
+			placementElement = vardata.placementE
+			varE = document.createElement('span')
+			varE.setAttribute('class', 'variable')
+			varE.style.color = 'hsla(190, 0%, 0%, 1)'
+			varE.setAttribute('contenteditable', true)
+			varE.setAttribute('spellcheck',false)
+			varE.innerHTML = vardata.vartext
+			
+			placetype = vdata.placementType
+			if (placetype == 'beforeElement') {
+				placementElement.parentNode.insertBefore(varE, placementElement.nextSibling)
+				varE.id = eElementUid
+				editorElementList[eElementUid] = [vardata.vartext, 'var']
+				eElementUid = eElementUid + 1
+			}
+			else if (placetype == 'end') {
+				fullvarDiv.appendChild(varE)
+				varE.id = eElementUid
+				editorElementList[eElementUid] = [vardata.vartext, 'var']
+				eElementUid = eElementUid + 1
+			}
+			else if(placetype == 'inBetween') {
+				breakDiv = vardata.placementE
+				breakposition = vardata.breakposition
+				breakText = breakDiv.innerHTML
+				piece1 = breakText.slice(0, breakposition)
+				piece2 = breakText.slice(vardata.vartext.length + breakposition, breakText.length)
+				var textE = document.createElement('span')
+				textE.setAttribute('class', 'text')
+				textE.style.color = 'hsla(40, 0%, 80%, 1)'
+				textE.setAttribute('spellcheck',false)
+				textE.id = eElementUid
+				eElementUid = eElementUid + 1
+				textE.setAttribute('contenteditable', true)
+				textE.innerHTML = piece1
+
+				var piece1Element = textE
+
+				var textE = document.createElement('span')
+				textE.setAttribute('class', 'text')
+				textE.style.color = 'hsla(40, 0%, 80%, 1)'
+				textE.setAttribute('contenteditable', true)
+				textE.id = eElementUid
+				eElementUid = eElementUid + 1
+				textE.setAttribute('spellcheck',false)
+				textE.innerHTML = piece2
+
+				varE.id = eElementUid
+				eElementUid = eElementUid + 1
+
+				var piece2Element = textE
+
+				$(piece1Element).insertBefore(breakDiv);
+				editorElementList[parseInt(piece1Element.id)] = [piece1, 'text']
+
+				$(varE).insertAfter(piece1Element);
+
+				editorElementList[parseInt(varE.id)] = [vardata.vartext, 'var']
+
+				$(piece2Element).insertAfter(breakDiv);
+
+				editorElementList[parseInt(piece2Element.id)] = [piece2, 'text']
+
+				delete editorElementList[breakDiv.id]
+				$(breakDiv).remove()
+			}
+		}
+
+
+
+
+		basicadd = {}
+		basicadd.text = 'testtdata'
+		addText(basicadd)
+
+		editmode = 'var'
+
+		caretP = 0
+
+		function inputHandleVar(event) {
+			vdata = {}
+			oldString = editorElementList[parseInt(event.target.id)][0]
+			newString = event.target.innerHTML
+			newdetail = getDifference(oldString, newString)
+			breakp = getCaretPosition(event.target)
+			vdata.vartext = event.target.innerHTML.slice(breakp - newdetail[0].length, breakp)
+			vdata.breakposition = breakp - newdetail[0].length
+			vdata.placementE = event.target
+			vdata.placementType = 'inBetween'
+			addVar(vdata)
+		}
+
+		// $(fullTextDiv).on("mousedown mouseup keydown keyup", updateCaretP);
+
+		// code from https://jsfiddle.net/d4rcuxw9/1/ 
+
+		function getDifference(oldstr, newstr) {
+			var ix = 0;
+			var jx = 0;
+			var result = "";
+
+			firstrecord = -1
+			
+			while (jx < newstr.length) {
+				if (oldstr[ix] != newstr[jx] || ix == oldstr.length) {
+					result += newstr[jx];
+					if (firstrecord == -1) {
+						firstrecord = ix
+					}
+				}
+				else {
+					ix++;
+				}
+				jx++;
+			}
+			
+			return [result, firstrecord];
+		}
+
+		// Code from https://stackoverflow.com/questions/3972014/get-caret-position-in-contenteditable-div 
+		function getCaretPosition(editableDiv) {
+			var caretPos = 0,
+				sel, range;
+			if (window.getSelection) {
+				sel = window.getSelection();
+				if (sel.rangeCount) {
+				range = sel.getRangeAt(0);
+					if (range.commonAncestorContainer.parentNode == editableDiv) {
+						caretPos = range.endOffset;
+					}
+				}
+			} 
+			else if (document.selection && document.selection.createRange) {
+				range = document.selection.createRange();
+				if (range.parentElement() == editableDiv) {
+					var tempEl = document.createElement("span");
+					editableDiv.insertBefore(tempEl, editableDiv.firstChild);
+					var tempRange = range.duplicate();
+					tempRange.moveToElementText(tempEl);
+					tempRange.setEndPoint("EndToEnd", range);
+					caretPos = tempRange.text.length;
+				}
+			}
+			return caretPos;
+		}
+
+		
+
+		$("body").on('DOMSubtreeModified', ".text", inputHandleVar);
+
+
+
+
+
+
+		
+		
+			
+		</script>
+
+
+	</body>
+<html>
+

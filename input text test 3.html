@@ -1,0 +1,247 @@
+<html>
+	<head>
+		<title>Game of Cat and Mouse</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		
+		<style type="text/css">
+			a {
+				cursor: pointer;
+			}
+		</style>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.5.0/math.min.js" type="text/javascript"></script>
+		<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML"></script> -->
+		
+		
+		<script type="application/ld+json">
+			{
+			  "@type": "Simulation",
+			  "name": "Game of Cat and Mouse",
+			  "author": "Prajwal DSouza",
+			  "description": "A simulation based on a Numberphile Video"
+			  }
+		</script>
+
+		  <meta charset="UTF-8">
+		  <meta name="description" content="A simulation based on a Numberphile Video">
+		  <meta name="keywords" content="Game of Cat and Mouse, Numberphile, Math, Game theory">
+		  <meta name="author" content="Prajwal DSouza">
+		  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body style='margin:0px; display: block;'>
+		<div id="containAll" style='margin:0px;width:100%; height: 100%; font-size: 0; display: inline-block;'> 
+			<div id="controlTitleSection" style='margin:0px;width:100%; height: 70%;overflow: hidden;position: relative;z-index: 4; display: inline-block; font-size: 4vw;' contenteditable="true"></div>
+		</div>
+
+
+		<script type="text/javascript">
+
+		varStartstring = '<span class="variable" style="color: hsla(190, 100%, 50%, 1);" contenteditable="true">'
+		varEndstring = '</span>'
+
+		codeStartstring = '<span class="code" style="color: hsla(190, 0%, 0%, 1);">'
+		codeEndstring = '</span>'
+
+		function inputHandleVar(event) {
+			console.log("variable instance")
+			console.log(event)
+		}
+
+		function inputHandleText(event) {
+			console.log("variable instance")
+			console.log(event)
+		}
+
+		function grabInstances() {
+			allchildnodes = document.getElementById('controlTitleSection').childNodes
+			editablelocations = []
+			caretpointer = 0
+			for (ch = 0; ch < allchildnodes.length; ch++) {
+				if (allchildnodes[ch].nodeName == 'VARIABLE') {
+					htmllength = allchildnodes[ch].innerHTML.length + varStartLen + varEndLen
+					textlength = allchildnodes[ch].innerText.length
+
+					editablelocation = {}
+					editablelocation['start'] = caretpointer
+					editablelocation['end'] = caretpointer + htmllength
+					editablelocation['text'] = allchildnodes[ch].innerHTML
+					editablelocation['length'] = htmllength
+					// console.log(htmllength)
+					editablelocations.push(editablelocation)
+					editablestate[caretpointer] = [allchildnodes[ch], 'start']
+					editablestate[caretpointer + htmllength] = [allchildnodes[ch], 'end']
+				}
+				else if (allchildnodes[ch].nodeName == '#text') {
+					htmllength = allchildnodes[ch].length
+				}
+				caretpointer = caretpointer + htmllength
+			}
+		}
+
+		mode = 'text'
+
+		function checkchange(event) {
+			vars = document.getElementsByClassName('variable')
+
+			if (vars.length == 0) {
+
+			}
+
+			if (editablelocations.length == 0) {
+				replacetext = varStartstring + newtext[changeindex] + varEndstring
+				newstring = newtext.slice(0,changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+				event.target.innerHTML = newstring
+				oldtext = newstring
+				range = document.createRange();
+				sel = window.getSelection();
+				range.setStart(event.target.childNodes[1], 1);
+				range.collapse(true);
+				sel.removeAllRanges();
+				sel.addRange(range);
+				event.target.focus();
+			}
+			else {
+				lastsection = true
+				loopindex = changeindex
+				while (loopindex < newtext.length) {
+					if (typeof editablestate[loopindex] != 'undefined') {
+						// console.log(editablestate[loopindex][0])
+						// console.log(editablestate[loopindex][1])
+						console.log(loopindex, changeindex, editablestate[loopindex][1])
+						lastsection = false
+						// if (loopindex != changeindex) {
+						if (editablestate[loopindex][1] == 'start') {
+							if (loopindex != changeindex) {
+								console.log("text")
+								replacetext = varStartstring + newtext[changeindex] + varEndstring
+								newstring = newtext.slice(0,changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+								event.target.innerHTML = newstring
+								oldtext = newstring
+								// range = document.createRange();
+								// sel = window.getSelection();
+								// range.setStart(event.target.childNodes[1], 1);
+								// range.collapse(true);
+								// sel.removeAllRanges();
+								// sel.addRange(range);
+								// event.target.focus();
+							}
+							else {
+								console.log('variable')
+							}
+	
+						}
+						else if (editablestate[loopindex][1] == 'end') {
+							console.log('variable')
+						}
+						break
+						// }
+						// else if (loopindex == changeindex) {
+						// 	if (typeof editablestate[loopindex + 1] != 'undefined' && editablestate[loopindex + 1][1] == 'start')
+						// 		console.log('starter')
+						// }
+						// }
+	
+					}
+						
+					loopindex = loopindex + 1
+				}
+				if (lastsection) {
+					console.log("lasttext")
+					replacetext = varStartstring + newtext[changeindex] + varEndstring
+					console.log(changeindex, newtext)
+					newstring = newtext.slice(0, changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+					event.target.innerHTML = newstring
+					oldtext = newstring
+					// range = document.createRange();
+					// sel = window.getSelection();
+					// range.setStart(event.target.childNodes[1], 1);
+					// range.collapse(true);
+					// sel.removeAllRanges();
+					// sel.addRange(range);
+					// event.target.focus();
+				}
+				// for(loc = 0; loc < editablelocations.length; loc++) {
+				// 	editablelocation = editablelocations[loc]
+				// 	if (changeindex >= (editablelocation['startindex'] - 1) && changeindex < editablelocation['endindex']) {
+				// 		console.log('inside')
+				// 		console.log(editablelocation)
+				// 		editexisting = true
+				// 		break
+				// 	}
+				// }
+
+				// if (editexisting) {
+
+				// }
+				// else {
+				// 	replacetext = '<variable style = "color: hsla(190, 100%, 50%, 1);">' + newtext[changeindex] + '</variable>'
+				// 	newstring = newtext.slice(0, changeindex) + replacetext + newtext.slice(changeindex + 1, newtext.length)
+				// 	editablelocation = {}
+				// 	editablelocation['startindex'] = changeindex
+				// 	editablelocation['endindex'] = changeindex + 1
+				// 	editablelocation['insidetext'] = newtext[changeindex]
+				// 	editablelocations.push(editablelocation)
+				// 	event.target.innerHTML = newstring
+					// oldtext = newstring
+				// 	range = document.createRange();
+				// 	sel = window.getSelection();
+				// 	allchildnodes = event.target.childNodes
+				// 	range.setStart(event.target.childNodes[1], 1);
+				// 	range.collapse(true);
+				// 	sel.removeAllRanges();
+				// 	sel.addRange(range);
+				// 	event.target.focus();
+				// }
+			}
+
+			// sel = window.getSelection();
+			// sel.modify("extend", "backward", "paragraphboundary");
+			// pos = sel.toString().length;
+			// sel.removeAllRanges();
+			// console.log(pos)
+
+	
+			// console.log(document.getElementById('controlTitleSection').innerHTML)
+
+			grabInstances()
+			vars = document.getElementsByClassName('variable')
+			console.log(vars)
+			for (m = 0; m < vars.length; m++) {
+				vars[m].addEventListener("input", inputHandle);
+
+			}
+			
+		}
+
+
+
+		function comparestrings(oldstr,newstr) {
+			returnindex = oldstr.length
+			for(m = 0; m < oldstr.length; m++) {
+				if (newstr[m] != oldstr[m]) {
+					returnindex = m
+					break
+				}
+			}
+			return returnindex
+		}
+
+		document.getElementById("controlTitleSection").addEventListener("input", checkchange);
+
+		$("body").on('DOMSubtreeModified', ".variable", inputHandle);
+
+
+
+
+
+		
+		
+			
+		</script>
+
+
+	</body>
+<html>
+
