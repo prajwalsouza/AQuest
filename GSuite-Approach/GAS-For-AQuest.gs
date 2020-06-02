@@ -198,12 +198,15 @@ function generateStudentForms() {
   var sNameSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames');
   var sheetData = sNameSheet.getDataRange().getValues();
   
+  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+  
   var startTime = new Date();
   
-  var startRow = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("B3").getValue();
+  var startRow = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D3").getValue();
   if (startRow == '') {
     startRow = 0
   }
+  
   
   var maxTime = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("H1").getValue();
   
@@ -213,11 +216,18 @@ function generateStudentForms() {
     var endTime = new Date();
     SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("E3").setValue((endTime - startTime)/1000);
     
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("B3").setValue(row_number);
+    
     generateStudentForm(row_number)
+    
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D3").setValue(row_number);
+    
     SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("B3").setValue(row_number - 1)
     
-    var endTime = new Date();
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("E3").setValue((endTime - startTime)/1000);
+    var endTime2 = new Date();
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("E3").setValue((endTime2 - startTime)/1000);
+    
+    progressSheet.getRange("F3").setValue(((endTime2 - endTime)/1000) + progressSheet.getRange("F3").getValue());
     
     var timeInMin = ((endTime - startTime)/1000)/60
     if (timeInMin > maxTime) {
@@ -227,8 +237,8 @@ function generateStudentForms() {
     
   }
   
-  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
-  progressSheet.getRange("F3").setValue(progressSheet.getRange("E3").getValue() + progressSheet.getRange("F3").getValue());
+  
+  
   
 }
 
@@ -265,11 +275,12 @@ function disableAcceptResponse() {
   var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
   
   for (emailN = 1; emailN < fullSheetValues.length; emailN++) {
-    var existingForm = FormApp.openById(fullSheetValues[emailN][6]);
+    var existingForm = FormApp.openById(fullSheetValues[emailN][4]);
     existingForm.setAcceptingResponses(false)
+    progressSheet.getRange("D10").setValue("Disabling Form Response for " + emailN);
   }
   
-  progressSheet.getRange("B9").setValue("Not Accepting Responses");
+  progressSheet.getRange("B10").setValue("Not Accepting Responses");
 }
 
 function enableAcceptResponse() {
@@ -278,11 +289,26 @@ function enableAcceptResponse() {
   var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
   
   for (emailN = 1; emailN < fullSheetValues.length; emailN++) {
-    var existingForm = FormApp.openById(fullSheetValues[emailN][6]);
+    var existingForm = FormApp.openById(fullSheetValues[emailN][4]);
     existingForm.setAcceptingResponses(true)
+    progressSheet.getRange("D10").setValue("Enabled Form Response for " + emailN);
   }
   
-  progressSheet.getRange("B9").setValue("Accepting Responses");
+  progressSheet.getRange("B10").setValue("Accepting Responses");
+}
+
+
+
+function changeFormResponseLimit() {
+  var sNamesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames')
+  var fullSheetValues = sNamesSheet.getDataRange().getValues()
+  var limitSingleResponse = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('BasicInfo').getRange("C13").getValue();
+  
+  for (emailN = 1; emailN < fullSheetValues.length; emailN++) {
+    var existingForm = FormApp.openById(fullSheetValues[emailN][4]);
+    existingForm.setLimitOneResponsePerUser(limitSingleResponse)
+  }
+  
 }
 
 
@@ -291,8 +317,15 @@ function readAnswers() {
   var fullSheetValues = sNamesSheet.getDataRange().getValues()
   
   var responsesRead = 0
+  
+  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+  
+  SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D4").setValue(0);
 
   for (studentN = 1; studentN < fullSheetValues.length; studentN++) {
+    
+    progressSheet.getRange("D6").setValue("Checking Form Response for " + studentN);
+    
     var existingForm = FormApp.openById(fullSheetValues[studentN][4]);
     var allResponses = existingForm.getResponses()
     
@@ -302,6 +335,9 @@ function readAnswers() {
     studentColmn = genQuestionsSheetValues[studentN]
   
     if (allResponses.length >= 1) {
+      
+      progressSheet.getRange("D6").setValue("Reading latest Form Response of " + studentN);
+      
       var formResponse = allResponses[allResponses.length - 1];
       var itemResponses = formResponse.getItemResponses();
       
@@ -317,7 +353,7 @@ function readAnswers() {
       
       responsesRead = responsesRead + 1
       
-      var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+      
       progressSheet.getRange("B6").setValue(responsesRead);
     }
     
@@ -331,8 +367,29 @@ function evaluateAnswers() {
   var fullSheetValues = sNamesSheet.getDataRange().getValues()
   
   var evalSoFar = 0
+  
+  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+  
+  var startTime = new Date();
+  
+  var startRow = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D4").getValue();
+  if (startRow == '') {
+    startRow = 0
+  }
+  
+  
+  var maxTime = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("H1").getValue();
+  
+  startRow = startRow + 1
 
-  for (studentN = 1; studentN < fullSheetValues.length; studentN++) {
+  for (studentN = startRow; studentN < fullSheetValues.length; studentN++) {
+    
+    var endTime = new Date();
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("E7").setValue((endTime - startTime)/1000);
+    
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("B4").setValue(studentN);
+    
+    
 
     var existingForm = FormApp.openById(fullSheetValues[studentN][4]);
     var allResponses = existingForm.getResponses()
@@ -369,14 +426,19 @@ function evaluateAnswers() {
     messagesSheet.getRange(studentN + 1, 7).setValue(SpreadsheetApp.getActiveSpreadsheet().getSheetByName('BasicInfo').getRange("C10").getValue())
     
     
-    if (allResponses.length == 1) {
-      var formResponse = allResponses[0];
-      var itemResponses = formResponse.getItemResponses();
+    var resultSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Results')
+    var recieveStatus = resultSheet.getRange(studentN + 1, 5).getValue();
+    
+    progressSheet.getRange("D7").setValue("Checking Response of " + studentN);
+    
+    if (recieveStatus != "") {
       
       var formQuestionsSeenSoFar = 0
       
       var startAnswerPrint = 4
       var answerPrintCount = 0
+      
+      progressSheet.getRange("D7").setValue("Evaluating Response of " + studentN);
    
       
       for (colN = 0; colN < studentColmn.length; colN++) {
@@ -417,6 +479,25 @@ function evaluateAnswers() {
     
       var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
       progressSheet.getRange("B7").setValue(evalSoFar);
+    }
+    
+    if (studentN + 1 == fullSheetValues.length) {
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D4").setValue(0);
+    }
+    else {
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CodeDetails').getRange("D4").setValue(studentN);
+    }
+   
+    
+    var endTime2 = new Date();
+    SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("E7").setValue((endTime2 - startTime)/1000);
+    
+    progressSheet.getRange("F7").setValue(((endTime2 - endTime)/1000) + progressSheet.getRange("F7").getValue());
+    
+    var timeInMin = ((endTime - startTime)/1000)/60
+    if (timeInMin > maxTime) {
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress').getRange("D7").setValue("Ended at " + (studentN) + ", to prevent Max Execution Time Limit Error.");
+      break;
     }
     
     
@@ -467,13 +548,16 @@ function getResponseStatus() {
     resultSheet.getRange(studentN + 1, 2).setValue(sNamesSheet.getRange(studentN + 1, 2).getValue())
     resultSheet.getRange(studentN + 1, 3).setValue(sNamesSheet.getRange(studentN + 1, 3).getValue())
     resultSheet.getRange(studentN + 1, 4).setValue(sNamesSheet.getRange(studentN + 1, 4).getValue())
+    
+    var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+    progressSheet.getRange("D5").setValue("Checking Response of " + studentN);
   
     if (allResponses.length >= 1) {
-      resultSheet.getRange(studentN + 1, 5).setValue('Recieved')
+      resultSheet.getRange(studentN + 1, 5).setValue('Recieved latest at ' + allResponses[allResponses.length - 1].getTimestamp())
       resultSheet.getRange(studentN + 1, 6).setValue(allResponses.length)
       responsesNumber = responsesNumber + 1
       
-      var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+      
       progressSheet.getRange("B5").setValue(responsesNumber);
     }
   }
@@ -485,6 +569,8 @@ function updateTotalMarks() {
   var fullSheetValues = sNamesSheet.getDataRange().getValues()
   
   var markUpdatesSoFar = 0
+  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+  
 
   for (studentN = 1; studentN < fullSheetValues.length; studentN++) {
     var existingForm = FormApp.openById(fullSheetValues[studentN][4]);
@@ -498,13 +584,14 @@ function updateTotalMarks() {
     var resultSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Results');
     
     studentColmn = genQuestionsSheetValues[studentN]
+    
+    progressSheet.getRange("D8").setValue("Updating Marks for " + studentN);
 
     if (allResponses.length >= 1) {
       resultSheet.getRange(studentN + 1, 7).setValue(evaluationSheet.getRange(1, (studentN - 1)*7 + 5).getValue())
       resultSheet.getRange(studentN + 1, 8).setValue(SpreadsheetApp.getActiveSpreadsheet().getSheetByName('QSheet').getRange("E1").getValue())
       markUpdatesSoFar = markUpdatesSoFar + 1
       
-      var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
       progressSheet.getRange("B8").setValue(markUpdatesSoFar);
     }
   }
@@ -514,6 +601,7 @@ function updateTotalMarks() {
 function sendEvaluationResultsViaEmail() {
   var evaluationSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Evaluation')
   var messagesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Messages')
+  var resultSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Results');
   
   var resultSentSoFar = 0
 
@@ -522,48 +610,75 @@ function sendEvaluationResultsViaEmail() {
   
   var sNamesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames')
   var fullSheetValues = sNamesSheet.getDataRange().getValues()
+  
+  var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
+  
+  var sendOnlyIfAnswersRecieved = progressSheet.getRange("H9").getValue();
+  var avoidRepeatedSending = progressSheet.getRange("H10").getValue();
+  
+  
 
   for (studentN = 1; studentN < fullSheetValues.length; studentN++) {
-    var studentName = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames').getRange(studentN + 1, 2).getValue()
-    var studentEmail = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames').getRange(studentN + 1, 3).getValue()
-    var newSpreadsheet = SpreadsheetApp.create("Spreadsheet to export");
     
-    var valuesToCopy = evaluationSheet.getRange(1, 1 + (studentN - 1)*7, numOfRows, 5).getValues()
+    var sendStatus = 'Yes'
     
-    newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setValues(valuesToCopy)
+    if (sendOnlyIfAnswersRecieved == 'Yes') {
+      if (resultSheet.getRange(studentN + 1, 5).getValue() == '') {
+        sendStatus = 'No'
+      }
+    }
     
-    newSpreadsheet.getActiveSheet().getRange(1, 1, 3, 5).setFontWeight("bold");
-    
-    newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setVerticalAlignment("middle")
-    newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setHorizontalAlignment("center")
-    
-    newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
-    newSpreadsheet.getActiveSheet().setColumnWidths(1, 5, 200)
-    newSpreadsheet.getActiveSheet().setColumnWidth(2, 600)
-    
-    
-    SpreadsheetApp.flush();
-    var ssDoc = DriveApp.getFileById(newSpreadsheet.getId());
-    var pdf = DriveApp.createFile(ssDoc.getAs(MimeType.PDF));
-    var attachpdf = pdf.getBlob().getBytes();
-    
-    var attach = {fileName:'Results.pdf',content:attachpdf, mimeType:'application/pdf'};
-    
-    var emailAddress = messagesSheet.getRange(studentN + 1, 3).getValue()
-    var message = messagesSheet.getRange(studentN + 1, 8).getValue()
-    var subject = messagesSheet.getRange(studentN + 1, 7).getValue()
+    if (avoidRepeatedSending == 'Yes') {
+      if (messagesSheet.getRange(studentN + 1, 9).getValue() == 'Sent') {
+        sendStatus = 'No'
+      }
+    }
 
-    MailApp.sendEmail(emailAddress, subject, message, {attachments:[attach]});
-    
-    messagesSheet.getRange(studentN + 1, 9).setValue("Sent")
-    
-    DriveApp.getFileById(newSpreadsheet.getId()).setTrashed(true); 
-    DriveApp.getFileById(pdf.getId()).setTrashed(true);
-    
-    resultSentSoFar = resultSentSoFar + 1
-    
-    var progressSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Progress')
-    progressSheet.getRange("B9").setValue(resultSentSoFar);
+    if (sendStatus == 'Yes') {
+
+      var studentName = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames').getRange(studentN + 1, 2).getValue()
+      var studentEmail = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('StudentNames').getRange(studentN + 1, 3).getValue()
+      var newSpreadsheet = SpreadsheetApp.create("Spreadsheet to export");
+      
+      var valuesToCopy = evaluationSheet.getRange(1, 1 + (studentN - 1)*7, numOfRows, 5).getValues()
+      
+      newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setValues(valuesToCopy)
+      
+      newSpreadsheet.getActiveSheet().getRange(1, 1, 3, 5).setFontWeight("bold");
+      
+      newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setVerticalAlignment("middle")
+      newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setHorizontalAlignment("center")
+      
+      newSpreadsheet.getActiveSheet().getRange(1, 1, numOfRows, 5).setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP);
+      newSpreadsheet.getActiveSheet().setColumnWidths(1, 5, 200)
+      newSpreadsheet.getActiveSheet().setColumnWidth(2, 600)
+      
+      
+      SpreadsheetApp.flush();
+      var ssDoc = DriveApp.getFileById(newSpreadsheet.getId());
+      var pdf = DriveApp.createFile(ssDoc.getAs(MimeType.PDF));
+      var attachpdf = pdf.getBlob().getBytes();
+      
+      var attach = {fileName:'Results.pdf',content:attachpdf, mimeType:'application/pdf'};
+      
+      var emailAddress = messagesSheet.getRange(studentN + 1, 3).getValue()
+      var message = messagesSheet.getRange(studentN + 1, 8).getValue()
+      var subject = messagesSheet.getRange(studentN + 1, 7).getValue()
+      
+      MailApp.sendEmail(emailAddress, subject, message, {attachments:[attach]});
+      
+      messagesSheet.getRange(studentN + 1, 9).setValue("Sent")
+      
+      DriveApp.getFileById(newSpreadsheet.getId()).setTrashed(true); 
+      DriveApp.getFileById(pdf.getId()).setTrashed(true);
+      
+      resultSentSoFar = resultSentSoFar + 1
+      
+      progressSheet.getRange("D9").setValue("Sending Results to " + studentName);
+      
+      progressSheet.getRange("B9").setValue(resultSentSoFar);
+
+    }
     
   }
 
@@ -584,6 +699,7 @@ function onOpen() {
   menu.addItem('Evaluate Answers', 'evaluateAnswers').addToUi();
   menu.addItem('Update Totals', 'updateTotalMarks').addToUi();
   menu.addItem('Send Results via Email', 'sendEvaluationResultsViaEmail').addToUi();
+  menu.addItem('Change Form Preferences', 'changeFormResponseLimit').addToUi();
   
 }
 
